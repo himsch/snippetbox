@@ -4,34 +4,35 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
 	addr := flag.String("addr", ":4000", "HTTP network address")
 
-	// 중요한 점은 flag.Parse() 함수를 사용하여 명령줄 플래그를 구문 분석한다는 것입니다.
-	// 이는 명령줄 플래그 값을 읽고 이를 addr에 할당합니다.
-	// 변수. addr 변수를 사용하기 *전에* 이것을 호출해야 합니다
-	// 그렇지 않으면 항상 기본값 ":4000"이 포함됩니다. 오류가 있는 경우
-	// 구문 분석 중에 발생하면 애플리케이션이 종료됩니다.
 	flag.Parse()
+
+	// 정보 메시지 작성을 위한 로거를 생성하려면 log.New()를 사용합니다.
+	// 여기에는 로그를 쓸 대상(os.Stdout), 메시지의 문자열 접두사(INFO 다음에 탭이 옴),
+	// 포함할 추가 정보를 나타내는 플래그(현지 날짜 및 시간) 등 세 가지 매개변수가 사용됩니다.
+	// 플래그는 비트 OR 연산자 |를 사용하여 결합됩니다.
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+
+	// 오류 메시지 작성을 위한 로거도 같은 방식으로 생성하되 stderr을 대상으로 사용하고
+	// log.Lshortfile 플래그를 사용하여 해당 파일명과 라인 번호를 포함시킨다.
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	mux := http.NewServeMux()
 
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
-
-	// mux.Handle() 함수를 사용하여 파일 서버를 처리기로 등록합니다.
-	// "/static/"으로 시작하는 모든 URL 경로. 일치하는 경로의 경우 요청이 파일 서버에 도달하기 전에 "/static" 접두사를 제거합니다.
 	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
 	mux.HandleFunc("/", home)
 	mux.HandleFunc("/snippet/view", snippetView)
 	mux.HandleFunc("/snippet/create", snippetCreate)
 
-	// flag.String() 함수에서 반환된 값은 플래그에 대한 포인터입니다.
-	// 값, 값 자체가 아닙니다. 따라서 포인터를 역참조해야 합니다. (즉, 앞에 * 기호를 붙입니다).
-	// 로그 메시지에 주소를 삽입하기 위해 log.Printf() 함수를 사용하고 있다는 점에 유의하세요.
-	log.Printf("Starting server on %s", *addr)
+	// 표준 로거 대신 두 개의 새로운 로거를 사용하여 메시지를 작성합니다.
+	infoLog.Printf("Starting server on %s", *addr)
 	err := http.ListenAndServe(*addr, mux)
-	log.Fatal(err)
+	errorLog.Fatal(err)
 }

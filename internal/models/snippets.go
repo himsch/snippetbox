@@ -62,5 +62,41 @@ func (m *SnippetModel) Get(id int) (*Snippet, error) {
 }
 
 func (m *SnippetModel) Latest() ([]*Snippet, error) {
-	return nil, nil
+	stmt := `SELECT id, title, content, created, expires
+			FROM snippets 
+			WHERE expires > UTC_TIMESTAMP() 
+			ORDER BY id DESC
+			LIMIT 10`
+
+	rows, err := m.DB.Query(stmt)
+	if err != nil {
+		return nil, err
+	}
+
+	// sql.Rows 결과 집합이 Latest() 메서드가 반환되기 전에 항상 적절하게 닫히도록
+	// rows.Close()를 defer합니다.
+	// 이 defer 문은 Query() 메서드에서 오류를 확인한 *후에* 와야 합니다.
+	// 그렇지 않고 Query()가 오류를 반환하면 nil 결과 집합을 닫으려고 할 때 패닉이 발생합니다.
+	defer rows.Close()
+
+	snippets := []*Snippet{}
+
+	for rows.Next() {
+		s := &Snippet{}
+
+		err = rows.Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires)
+		if err != nil {
+			return nil, err
+		}
+		snippets = append(snippets, s)
+	}
+
+	// rows.Next() 루프가 끝나면 rows.Err()을 호출하여 검색합니다.
+	// *반복하는 동안 발생한 오류*입니다.
+	// 성공적인 반복이 완료되었다고 가정하지 마세요.
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return snippets, nil
 }

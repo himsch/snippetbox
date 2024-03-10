@@ -49,7 +49,7 @@ func (m *SnippetModel) Get(id int) (*Snippet, error) {
 	// row.Scan은 데이터를 복사하려는 위치에 대한 *포인터*입니다.
 	// 인수 개수는 인수 개수와 정확히 같아야 합니다.
 	// 명령문에서 반환된 열입니다.
-	err := row.Scan(&s.ID, &s.Content, &s.Created, &s.Expires)
+	err := row.Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord

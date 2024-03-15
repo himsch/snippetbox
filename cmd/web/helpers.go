@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"runtime/debug"
@@ -35,10 +36,21 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 		return
 	}
 
-	w.WriteHeader(status)
+	// Initialize a new buffer.
+	buf := new(bytes.Buffer)
 
-	err := ts.ExecuteTemplate(w, "base", data)
+	// http.ResponseWriter에 직접 작성하는 대신 버퍼에 템플릿을 작성합니다.
+	// 오류가 있으면 serverError() 도우미를 호출한 다음 반환하세요.
+	err := ts.ExecuteTemplate(buf, "base", data)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
+
+	// 템플릿이 오류 없이 버퍼에 기록되면 계속 진행하여 HTTP 상태 코드를 http.ResponseWriter에 작성해도 안전합니다.
+	w.WriteHeader(status)
+
+	// 버퍼의 내용을 http.ResponseWriter에 씁니다.
+	// 참고: 이번에는 io.Writer를 사용하는 함수에 http.ResponseWriter를 전달하는 또 다른 시간입니다.
+	buf.WriteTo(w)
 }

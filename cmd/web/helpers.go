@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"time"
 )
 
 // serverError 도우미는 오류 메시지와 스택 추적을 errorLog에 기록한 다음
@@ -53,4 +54,13 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 	// 버퍼의 내용을 http.ResponseWriter에 씁니다.
 	// 참고: 이번에는 io.Writer를 사용하는 함수에 http.ResponseWriter를 전달하는 또 다른 시간입니다.
 	buf.WriteTo(w)
+}
+
+// 포인터 templateData를 반환하는 newTemplateData() 도우미를 만듭니다.
+// 현재 연도로 초기화된 구조체입니다.
+// *http.Request 매개변수는 현재 여기에 있지만 나중에 수행하겠습니다.
+func (app *application) newTemplateData(r *http.Request) *templateData {
+	return &templateData{
+		CurrentYear: time.Now().Year(),
+	}
 }

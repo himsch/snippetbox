@@ -2,10 +2,13 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"runtime/debug"
 	"time"
+
+	"github.com/go-playground/form/v4"
 )
 
 // serverError 도우미는 오류 메시지와 스택 추적을 errorLog에 기록한 다음
@@ -63,4 +66,24 @@ func (app *application) newTemplateData(r *http.Request) *templateData {
 	return &templateData{
 		CurrentYear: time.Now().Year(),
 	}
+}
+
+func (app *application) decodePostForm(r *http.Request, dst any) error {
+	err := r.ParseForm()
+	if err != nil {
+		return err
+	}
+
+	err = app.formDecoder.Decode(dst, r.PostForm)
+	if err != nil {
+		// 잘못된 대상 대상을 사용하려고 하면 Decode() 메서드는
+		// *form.InvalidDecoderError 유형의 오류를 반환합니다.
+		// 우리는 오류를 반환하는 대신 오류를 확인하고 패닉을 발생시키기 위해 errors.As()를 사용합니다.
+		var invalidDecoderError *form.InvalidDecoderError
+		if errors.As(err, &invalidDecoderError) {
+			panic(err)
+		}
+		return err
+	}
+	return nil
 }

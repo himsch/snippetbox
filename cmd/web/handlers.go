@@ -59,22 +59,20 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "create.tmpl", data)
 }
 
+// HTML 양식 값을 다른 구조체 필드에 매핑하는 방법을 디코더에 알려주는
+// 구조체 태그를 포함하도록 snippetCreateForm 구조체를 업데이트합니다.
+// 예를 들어 여기서는 제목 필드에 "title"이라는 이름을 사용하여 HTML 양식 입력의 값을 저장하도록 디코더에 지시합니다.
+// 구조체 태그 `form:"-"`는 디코더가 디코딩 중에 필드를 완전히 무시하도록 지시합니다.
 type snippetCreateForm struct {
-	Title   string
-	Content string
-	Expires int
-	validator.Validator
+	Title               string `form:"title"`
+	Content             string `form:"content"`
+	Expires             int    `form:"expires"`
+	validator.Validator `form:"-"`
 }
 
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
-		return
-	}
-
 	var form snippetCreateForm
-	err = app.formDecoder.Decode(&form, r.PostForm)
+	err := app.decodePostForm(r, &form)
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return

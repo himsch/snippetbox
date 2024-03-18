@@ -51,6 +51,11 @@ func main() {
 	sessionManager.Store = mysqlstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
 
+	// 세션 쿠키에 Secure 속성이 설정되어 있는지 확인하세요.
+	// 이를 설정하면 쿠키는 HTTPS 연결이 사용될 때만 사용자의
+	// 웹 브라우저에 의해 전송되며 안전하지 않은 HTTP 연결을 통해서는 전송되지 않습니다.
+	sessionManager.Cookie.Secure = true
+
 	app := &application{
 		errorLog:       errorLog,
 		infoLog:        infoLog,
@@ -67,7 +72,7 @@ func main() {
 	}
 
 	infoLog.Printf("Starting server on %s", *addr)
-	err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	errorLog.Fatal(err)
 }
 

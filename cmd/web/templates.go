@@ -12,6 +12,7 @@ type templateData struct {
 	Snippet     *models.Snippet
 	Snippets    []*models.Snippet
 	Form        any
+	Flash       string
 }
 
 // 형식이 좋은 문자열을 반환하는 humanDate 함수를 만듭니다.

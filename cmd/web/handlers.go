@@ -43,8 +43,12 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	flash := app.sessionManager.PopString(r.Context(), "flash")
+
 	data := app.newTemplateData(r)
 	data.Snippet = snippet
+
+	data.Flash = flash
 
 	app.render(w, http.StatusOK, "view.tmpl", data)
 }
@@ -95,6 +99,10 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		app.serverError(w, err)
 		return
 	}
+
+	// Put() 메서드를 사용하여 문자열 값("Snippet이 성공적으로 완료되었습니다.
+	// 생성됨!") 및 해당 키("flash")를 세션 데이터에 연결합니다.
+	app.sessionManager.Put(r.Context(), "flash", "Snippet successfully created!")
 
 	// 스니펫 관련 페이지로 사용자를 리디렉션합니다.
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)

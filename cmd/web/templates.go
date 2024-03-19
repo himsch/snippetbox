@@ -14,6 +14,7 @@ type templateData struct {
 	Form            any
 	Flash           string
 	IsAuthenticated bool
+	CSRFToken       string
 }
 
 // 형식이 좋은 문자열을 반환하는 humanDate 함수를 만듭니다.

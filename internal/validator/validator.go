@@ -16,12 +16,17 @@ var EmailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9
 
 // 양식 필드에 대한 유효성 검사 오류 맵을 포함하는 새로운 유효성 검사기 유형을 정의합니다.
 type Validator struct {
-	FieldErrors map[string]string
+	NonFieldErrors []string
+	FieldErrors    map[string]string
 }
 
 // Valid()는 FieldErrors 맵에 항목이 포함되어 있지 않으면 true를 반환합니다.
 func (v *Validator) Valid() bool {
-	return len(v.FieldErrors) == 0
+	return len(v.FieldErrors) == 0 && len(v.NonFieldErrors) == 0
+}
+
+func (v *Validator) AddNonFieldError(message string) {
+	v.NonFieldErrors = append(v.NonFieldErrors, message)
 }
 
 // AddFieldError()는 FieldErrors 맵에 오류 메시지를 추가합니다(주어진 키에 대한 항목이 이미 존재하지 않는 한).

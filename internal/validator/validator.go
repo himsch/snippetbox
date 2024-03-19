@@ -1,9 +1,18 @@
 package validator
 
 import (
+	"regexp"
 	"strings"
 	"unicode/utf8"
 )
+
+// EmailRX
+// regexp.MustCompile() 함수를 사용하여 정규식을 구문 분석합니다.
+// 이메일 주소의 형식을 확인하는 패턴입니다.
+// 이는 '컴파일된' regexp.Regexp 유형에 대한 포인터를 반환하거나 오류 발생 시 패닉을 발생시킵니다.
+// 시작 시 이 패턴을 한 번 구문 분석하고 컴파일된 *regexp.Regexp를 변수에 저장하는 것이
+// 필요할 때마다 패턴을 다시 구문 분석하는 것보다 성능이 더 좋습니다.
+var EmailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 // 양식 필드에 대한 유효성 검사 오류 맵을 포함하는 새로운 유효성 검사기 유형을 정의합니다.
 type Validator struct {
@@ -52,4 +61,12 @@ func PermittedInt(value int, permittedValues ...int) bool {
 		}
 	}
 	return false
+}
+
+func MinChars(value string, n int) bool {
+	return utf8.RuneCountInString(value) >= n
+}
+
+func Matches(value string, rx *regexp.Regexp) bool {
+	return rx.MatchString(value)
 }

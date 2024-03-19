@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/justinas/nosurf"
 	"net/http"
@@ -65,4 +66,32 @@ func noSurf(next http.Handler) http.Handler {
 	})
 
 	return csrfHandler
+}
+
+func (app *application) authenticate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// GetInt() 메서드를 사용하여 세션에서 authenticatedUserID 값을 검색합니다.
+		// 세션에 "authenticatedUserID" 값이 없으면 int(0)에 대해 0 값을 반환합니다.
+		// 이 경우 체인의 다음 핸들러를 정상적으로 호출하고 반환합니다.
+		id := app.sessionManager.GetInt(r.Context(), "authenticatedUserID")
+		if id == 0 {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		exists, err := app.users.Exists(id)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+
+		// 일치하는 사용자가 발견되면 해당 요청이 데이터베이스에 존재하는 인증된 사용자로부터 온 것임을 알 수 있습니다.
+		// 요청의 새 복사본을 생성하고(요청 컨텍스트에서 isAuthenticatedContextKey 값이 true임) 이를 r에 할당합니다.
+		if exists {
+			ctx := context.WithValue(r.Context(), isAuthenticatedContextKey, true)
+			r = r.WithContext(ctx)
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

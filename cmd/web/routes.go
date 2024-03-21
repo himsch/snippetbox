@@ -26,6 +26,8 @@ func (app *application) routes() http.Handler {
 	// 파일 서버로 직접 전달될 수 있으며 해당 정적 파일이 존재하는 한 제공됩니다.
 	router.Handler(http.MethodGet, "/static/*filepath", fileServer)
 
+	router.HandlerFunc(http.MethodGet, "/ping", ping)
+
 	dynamic := alice.New(app.sessionManager.LoadAndSave, noSurf, app.authenticate)
 
 	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(app.home))

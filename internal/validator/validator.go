@@ -57,8 +57,8 @@ func MaxChars(value string, n int) bool {
 	return utf8.RuneCountInString(value) <= n
 }
 
-// PermittedInt 는 값이 허용되는 정수 목록에 있으면 true를 반환합니다.
-func PermittedInt(value int, permittedValues ...int) bool {
+// PermittedValue 는 값이 허용되는 T 목록에 있으면 true를 반환합니다.
+func PermittedValue[T comparable](value T, permittedValues ...T) bool {
 	for i := range permittedValues {
 		if value == permittedValues[i] {
 			return true

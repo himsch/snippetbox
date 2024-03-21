@@ -22,7 +22,10 @@ type templateData struct {
 // 형식이 좋은 문자열을 반환하는 humanDate 함수를 만듭니다.
 // time.Time 객체의 표현.
 func humanDate(t time.Time) string {
-	return t.Format("02 Jan 2006 at 15:04")
+	if t.IsZero() {
+		return ""
+	}
+	return t.UTC().Format("02 Jan 2006 at 15:04")
 }
 
 // template.FuncMap 객체를 초기화하고 전역 변수에 저장합니다.

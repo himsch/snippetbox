@@ -2,8 +2,10 @@ package main
 
 import (
 	"html/template"
+	"io/fs"
 	"path/filepath"
 	"snippetbox/internal/models"
+	"snippetbox/ui"
 	"time"
 )
 
@@ -32,8 +34,8 @@ var functions = template.FuncMap{
 func newTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 
-	// like: [ui/html/pages/home.tmpl ui/html/pages/view.tmpl]
-	pages, err := filepath.Glob("./ui/html/pages/*.tmpl")
+	// like: ui/ [html/pages/home.tmpl html/pages/view.tmpl]
+	pages, err := fs.Glob(ui.Files, "html/pages/*.tmpl")
 	if err != nil {
 		return nil, err
 	}
@@ -42,20 +44,15 @@ func newTemplateCache() (map[string]*template.Template, error) {
 		// 전체 파일 경로에서 파일 이름(예: 'home.tmpl')을 추출합니다.
 		name := filepath.Base(page)
 
-		// ParseFiles() 메서드를 호출하기 전에 template.FuncMap을 템플릿 세트에 등록해야 합니다.
-		// 즉, template.New()를 사용하여 빈 템플릿 세트를 만들고,
-		// Funcs() 메서드를 사용하여 template.FuncMap을 등록한 다음 파일을 정상적으로 구문 분석해야 합니다.
-		ts, err := template.New(name).Funcs(functions).ParseFiles("./ui/html/base.tmpl")
-		if err != nil {
-			return nil, err
+		// 구문 분석하려는 템플릿의 파일 경로 패턴을 포함하는 조각을 만듭니다.
+		patterns := []string{
+			"html/base.tmpl",
+			"html/partials/*.tmpl",
+			page,
 		}
 
-		ts, err = ts.ParseGlob("./ui/html/partials/*.tmpl")
-		if err != nil {
-			return nil, err
-		}
-
-		ts, err = ts.ParseFiles(page)
+		// ParseFiles() 대신 ParseFS()를 사용하여 ui.Files 내장 파일 시스템에서 템플릿 파일을 구문 분석합니다.
+		ts, err := template.New(name).Funcs(functions).ParseFS(ui.Files, patterns...)
 		if err != nil {
 			return nil, err
 		}

@@ -4,15 +4,32 @@ import (
 	"bytes"
 	"github.com/alexedwards/scs/v2"
 	"github.com/go-playground/form/v4"
+	"html"
 	"io"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"net/url"
+	"regexp"
 	"snippetbox/internal/models/mocks"
 	"testing"
 	"time"
 )
+
+// 사용자 가입 페이지의 HTML에서 CSRF 토큰 값을 캡처하는 정규식을 정의합니다.
+var csrfTokenRX = regexp.MustCompile(`<input type="hidden" name="csrf_token" value="(.+)">`)
+
+func extractCSRFToken(t *testing.T, body string) string {
+	// FindStringSubmatch 메서드를 사용하여 HTML 본문에서 토큰을 추출합니다.
+	// 이는 첫 번째 위치에 일치하는 전체 패턴이 포함된 배열을 반환하고 후속 위치에 캡처된 데이터의 값을 반환합니다.
+	matches := csrfTokenRX.FindStringSubmatch(body)
+	if len(matches) < 2 {
+		t.Fatal("no csrf token found in body")
+	}
+
+	return html.UnescapeString(matches[1])
+}
 
 // 모의 종속성을 포함하는 애플리케이션 구조체의 인스턴스를 반환하는 newTestApplication 도우미를 만듭니다.
 func newTestApplication(t *testing.T) *application {
@@ -72,6 +89,22 @@ func newTestServer(t *testing.T, h http.Handler) *testServer {
 // GET 요청을 수행하고 응답 상태 코드, 헤더 및 본문을 반환합니다.
 func (ts *testServer) get(t *testing.T, urlPath string) (int, http.Header, string) {
 	rs, err := ts.Client().Get(ts.URL + urlPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer rs.Body.Close()
+	body, err := io.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bytes.TrimSpace(body)
+
+	return rs.StatusCode, rs.Header, string(body)
+}
+
+func (ts *testServer) postForm(t *testing.T, urlPath string, form url.Values) (int, http.Header, string) {
+	rs, err := ts.Client().PostForm(ts.URL+urlPath, form)
 	if err != nil {
 		t.Fatal(err)
 	}

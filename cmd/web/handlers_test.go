@@ -75,3 +75,16 @@ func TestSnippetView(t *testing.T) {
 		})
 	}
 }
+
+func TestUserSignup(t *testing.T) {
+	app := newTestApplication(t)
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
+
+	_, _, body := ts.get(t, "/user/signup")
+	csrfToken := extractCSRFToken(t, body)
+
+	// t.Logf() 함수를 사용하여 테스트 출력에 CSRF 토큰 값을 기록합니다.
+	// t.Logf() 함수는 fmt.Printf()와 동일한 방식으로 작동하지만 제공된 메시지를 테스트 출력에 씁니다.
+	t.Logf("CSRF token is: %q", csrfToken)
+}

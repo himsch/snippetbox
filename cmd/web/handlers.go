@@ -223,6 +223,12 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 	// 현재 사용자의 ID를 세션에 추가하여 이제 '로그인'되도록 합니다.
 	app.sessionManager.Put(r.Context(), "authenticatedUserID", id)
 
+	path := app.sessionManager.PopString(r.Context(), "redirectPathAfterLogin")
+	if path != "" {
+		http.Redirect(w, r, path, http.StatusSeeOther)
+		return
+	}
+
 	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
 }
 

@@ -17,6 +17,7 @@ type templateData struct {
 	Flash           string
 	IsAuthenticated bool
 	CSRFToken       string
+	User            *models.User
 }
 
 // 형식이 좋은 문자열을 반환하는 humanDate 함수를 만듭니다.
